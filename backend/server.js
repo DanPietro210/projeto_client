@@ -4,7 +4,7 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 
 // 2. Carregar a nossa chave secreta do Firebase
-const serviceAccount = require('./serviceAccountKey.json');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
 
 // 3. Iniciar a conexão com o Firebase
 admin.initializeApp({
