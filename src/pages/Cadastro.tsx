@@ -3,6 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { User, Calendar, Phone, Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 // --- INÍCIO DOS COMPONENTES INTEGRADOS ---
 const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number, totalSteps: number }) => (
@@ -145,7 +149,7 @@ const Cadastro = () => {
     resolver: zodResolver(cadastroSchema)
   });
 
-    const motivoOptions = [
+  const motivoOptions = [
     { id: "qualidade-comida", label: "Qualidade da Comida" },
     { id: "atendimento", label: "Atendimento da Equipe" },
     { id: "ambiente", label: "Ambiente e Conforto" },
@@ -240,15 +244,17 @@ const Cadastro = () => {
       melhorias: npsData.melhorias?.join(", "),
     };
 
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    // Substitua o URL de exemplo pelo URL real do seu backend na Vercel
+    const backendUrl = 'https://projeto-client-git-main-daniel-pietro-dias-projects.vercel.app/api/cadastro';
+    // --- FIM DA MODIFICAÇÃO ---
+
     try {
-      // --- INÍCIO DA MODIFICAÇÃO ---
-      // O fetch agora aponta para a nossa nova função serverless.
-      const response = await fetch("/.netlify/functions/submit-cadastro", {
+      const response = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(combinedData),
       });
-      // --- FIM DA MODIFICAÇÃO ---
 
       if (!response.ok) {
         throw new Error(`A resposta da rede não foi 'ok': ${await response.text()}`);
@@ -375,7 +381,6 @@ const Cadastro = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-lg sm:max-w-2xl">
-        {/* O formulário agora não precisa dos atributos do Netlify, pois o envio é feito via fetch */}
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8">
             <div className="text-center mb-6 sm:mb-8">
