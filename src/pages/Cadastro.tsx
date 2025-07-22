@@ -246,7 +246,7 @@ const Cadastro = () => {
 
     // --- INÍCIO DA MODIFICAÇÃO ---
     // Substitua o URL de exemplo pelo URL real do seu backend na Vercel
-    const backendUrl = 'https://projeto-client-git-main-daniel-pietro-dias-projects.vercel.app/api/cadastro';
+const backendUrl = `${import.meta.env.VITE_BACKEND_URL}/api/cadastro`;
     // --- FIM DA MODIFICAÇÃO ---
 
     try {
