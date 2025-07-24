@@ -262,6 +262,10 @@ const backendUrl = import.meta.env.VITE_API_URL;
       
       alert("Pesquisa e cadastro realizados com sucesso! Obrigado pelo seu feedback.");
       
+       // --- ADICIONE ESTA LINHA ---
+      window.location.href = 'https://www.saudeestruturada.com';
+      // --------------------------
+
       setCurrentStep(1);
       setNpsData({ pontosFortes: [], melhorias: [] });
       reset();
