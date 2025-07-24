@@ -3,57 +3,66 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
 
-// --- MODIFICAÇÃO DE SEGURANÇA ---
-// Lê a chave secreta a partir das variáveis de ambiente, em vez do ficheiro.
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+// Inicializa o app Express
+const app = express();
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// --- Configuração do Firebase Admin ---
+try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+} catch (e) {
+  console.error('Falha ao inicializar o Firebase Admin. Verifique a variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY.', e);
+}
 
 const db = admin.firestore();
-const app = express();
-const port = process.env.PORT || 3001;
 
-// --- MODIFICAÇÃO DE CORS ---
-// Lista de URLs que têm permissão para aceder ao seu backend
+// --- Configuração do CORS ---
+// Lista de domínios que podem acessar a API
 const allowedOrigins = [
   'https://saudeestruturada.com',
-  'http://localhost:5173' // Adicionado para facilitar testes locais
+  'http://localhost:5173' // Para testes locais
 ];
 
-const corsOptions = {
+app.use(cors({
   origin: function (origin, callback) {
+    // Permite requisições sem 'origin' (ex: Postman) ou da lista de permitidos
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Não permitido pela política de CORS'));
+      callback(new Error('Acesso negado pela política de CORS'));
     }
   }
-};
+}));
 
-// Usa a nova configuração de CORS mais robusta
-app.use(cors(corsOptions));
+// Permite que o Express leia o corpo da requisição em JSON
 app.use(express.json());
 
-// Rota para o formulário de cadastro
-app.post('/api/cadastro', async (req, res) => {
+// --- Definição da Rota ---
+// A rota que seu frontend está chamando
+app.post('/api/enviar', async (req, res) => {
   try {
     const formData = req.body;
-    if (!formData.nomeCompleto || !formData.whatsapp) {
-      return res.status(400).json({ message: 'Campos obrigatórios em falta.' });
+    console.log("Recebido:", formData); // Log para ver os dados no servidor
+
+    if (!formData || Object.keys(formData).length === 0) {
+      return res.status(400).json({ message: 'Nenhum dado recebido.' });
     }
+
     const docRef = await db.collection('cadastros').add({
       ...formData,
       createdAt: new Date().toISOString()
     });
+
     res.status(200).json({ message: 'Dados guardados com sucesso!', id: docRef.id });
+
   } catch (error) {
-    console.error('Erro no servidor:', error);
+    console.error('Erro no servidor ao salvar:', error);
     res.status(500).json({ message: 'Ocorreu um erro interno no servidor.' });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Servidor a rodar na porta ${port}`);
-});
+// A Vercel gerencia a porta, então o `app.listen` não é necessário para a publicação,
+// mas é útil para testes locais. O ideal é exportar o app.
+module.exports = app;
