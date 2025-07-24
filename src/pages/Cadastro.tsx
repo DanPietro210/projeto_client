@@ -246,7 +246,7 @@ const Cadastro = () => {
 
     // --- INÍCIO DA MODIFICAÇÃO ---
     // Substitua o URL de exemplo pelo URL real do seu backend na Vercel
-const backendUrl = `${import.meta.env.VITE_BACKEND_URL}/api/cadastro`;
+const backendUrl = process.env.REACT_APP_API_URL;
     // --- FIM DA MODIFICAÇÃO ---
 
     try {
