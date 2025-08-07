@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Aplica a regra especificamente para sua coleção "cadastros"
+    match /cadastros/{documentId} {
+      allow read, update, delete: if request.auth != null; // Permite ler, atualizar e deletar apenas se logado
+      allow create: if true; // Permite que qualquer um crie um novo cadastro (ex: formulário de contato)
+    }
+  }
+}
