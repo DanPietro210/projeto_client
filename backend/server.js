@@ -30,7 +30,7 @@ const db = admin.firestore();
 const app = express();
 
 // --- Configuração do CORS ---
-app.use(cors({ origin: ['https://saudeestruturada.com', 'http://localhost:5173'] }));
+app.use(cors({ origin: ['https://zayam.com.br', 'http://localhost:5173'] }));
 app.use(express.json());
 
 // --- Rota da API ---
