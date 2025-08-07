@@ -18,7 +18,7 @@ const port = process.env.PORT || 3001;
 // --- MODIFICAÇÃO DE CORS ---
 // Lista de URLs que têm permissão para aceder ao seu backend
 const allowedOrigins = [
-  'https://saudeestruturada.com',
+  'https://zayam.com.br',
   'http://localhost:5173' // Adicionado para facilitar testes locais
 ];
 
