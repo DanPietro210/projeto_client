@@ -244,10 +244,10 @@ const Cadastro = () => {
       melhorias: npsData.melhorias?.join(", "),
     };
 
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    // Substitua o URL de exemplo pelo URL real do seu backend na Vercel
-const backendUrl = import.meta.env.VITE_API_URL;
-    // --- FIM DA MODIFICAÇÃO ---
+	// A nova forma, simples e direta
+	const response = await fetch('/api/enviar', {
+		// ...
+	});
 
     try {
       const response = await fetch(backendUrl, {

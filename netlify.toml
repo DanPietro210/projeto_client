@@ -1,0 +1,17 @@
+# Local: /netlify.toml (na raiz do projeto)
+
+[build]
+  # Comando para construir seu front-end
+  command = "npm run build"
+
+  # Pasta onde o front-end construído é colocado
+  publish = "dist"
+
+  # Pasta onde o seu back-end (Netlify Functions) está
+  functions = "meu-backend-contato/netlify/functions"
+
+# Redirecionamento para unificar a API e resolver o CORS
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
