@@ -234,42 +234,39 @@ const Cadastro = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // --- INÍCIO DA VERSÃO CORRETA DA FUNÇÃO onSubmit ---
   const onSubmit = async (data: CadastroFormData) => {
     setIsSubmitting(true);
-
+  
     const combinedData = {
       ...npsData,
       ...data,
       pontosFortes: npsData.pontosFortes?.join(", "),
       melhorias: npsData.melhorias?.join(", "),
     };
-
-	// A nova forma, simples e direta
-	const response = await fetch('/api/enviar', {
-		// ...
-	});
-
+  
     try {
-      const response = await fetch(backendUrl, {
+      // Esta é a única chamada 'fetch' que deve estar aqui
+      const response = await fetch('/api/enviar', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(combinedData),
       });
-
+  
       if (!response.ok) {
         throw new Error(`A resposta da rede não foi 'ok': ${await response.text()}`);
       }
       
       alert("Pesquisa e cadastro realizados com sucesso! Obrigado pelo seu feedback.");
       
-       // --- ADICIONE ESTA LINHA ---
+      // Redireciona o usuário após o sucesso
       window.location.href = 'https://www.zayam.com.br';
-      // --------------------------
-
+  
+      // Opcional: Limpa o formulário (o usuário já será redirecionado)
       setCurrentStep(1);
       setNpsData({ pontosFortes: [], melhorias: [] });
       reset();
-
+  
     } catch (error) {
       console.error("Erro no envio do formulário:", error);
       alert("Erro no envio! Ocorreu um problema ao enviar seu feedback. Por favor, tente novamente.");
@@ -277,6 +274,7 @@ const Cadastro = () => {
       setIsSubmitting(false);
     }
   };
+  // --- FIM DA VERSÃO CORRETA DA FUNÇÃO onSubmit ---
 
 
   const aceitarMensagens = watch('aceitarMensagens');
@@ -401,20 +399,20 @@ const Cadastro = () => {
             
             <div className="flex justify-between gap-3">
               {currentStep > 1 && (
-                 <button type="button" onClick={handlePrevious} className="flex items-center space-x-2 h-11 sm:h-10 px-4 sm:px-6 text-sm sm:text-base flex-1 sm:flex-none border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Anterior</span>
-                </button>
+                  <button type="button" onClick={handlePrevious} className="flex items-center space-x-2 h-11 sm:h-10 px-4 sm:px-6 text-sm sm:text-base flex-1 sm:flex-none border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Anterior</span>
+                  </button>
               )}
               {currentStep < 6 ? (
-                 <button type="button" onClick={handleNext} disabled={!canProceedToNext()} className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 h-11 sm:h-10 px-4 sm:px-6 text-sm sm:text-base flex-1 sm:flex-none text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                  <span>Próximo</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                  <button type="button" onClick={handleNext} disabled={!canProceedToNext()} className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 h-11 sm:h-10 px-4 sm:px-6 text-sm sm:text-base flex-1 sm:flex-none text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <span>Próximo</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
               ) : (
-                 <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 text-base sm:text-sm h-12 sm:h-10 disabled:opacity-50">
-                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <> <Check className="w-5 h-5" /> <span>Finalizar Cadastro</span> </>}
-                </button>
+                  <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 text-base sm:text-sm h-12 sm:h-10 disabled:opacity-50">
+                    {isSubmitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <> <Check className="w-5 h-5" /> <span>Finalizar Cadastro</span> </>}
+                  </button>
               )}
             </div>
           </div>
