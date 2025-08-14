@@ -1,17 +1,14 @@
-# Local: /netlify.toml (na raiz do projeto)
+# netlify.toml
 
 [build]
-  # Comando para construir seu front-end
   command = "npm run build"
-
-  # Pasta onde o front-end construído é colocado
   publish = "dist"
+  functions = "netlify/functions"
 
-  # Pasta onde o seu back-end (Netlify Functions) está
-  functions = "meu-backend-contato/netlify/functions"
+[functions]
+  node_bundler = "esbuild"
 
-# Redirecionamento para unificar a API e resolver o CORS
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# --- ADICIONE ESTE BLOCO ABAIXO ---
+[dev]
+  # Esta é a porta em que o seu servidor Vite está rodando.
+  targetPort = 8080
