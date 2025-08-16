@@ -5,19 +5,18 @@ import { z } from "zod";
 import { User, Calendar, Phone, Check, ArrowLeft, ArrowRight } from "lucide-react";
 
 // --- INÍCIO DA CONFIGURAÇÃO E IMPORTAÇÃO DO FIREBASE ---
-// O erro ocorreu porque o caminho "@" não pôde ser resolvido.
-// Para corrigir e garantir que funcione, vamos inicializar o Firebase aqui.
-// Substitua os valores '...' pelas suas chaves reais do Firebase.
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+// Importamos 'doc' e 'setDoc' para usar um ID customizado
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
 
+// COLE AQUI AS CONFIGURAÇÕES DO SEU APP DA WEB DO FIREBASE CONSOLE
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto-id",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "...",
-  appId: "1:..."
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Inicializa o Firebase
@@ -133,7 +132,9 @@ const SingleChoice = ({ options, selectedValue, onChange, otherValue, onOtherCha
 
 const cadastroSchema = z.object({
   nomeCompleto: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  dataNascimento: z.string().min(1, "Data de nascimento é obrigatória"),
+  dataNascimento: z.string()
+    .min(10, "Data de nascimento deve estar completa")
+    .regex(/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/, "Formato inválido. Use DD/MM/AAAA"),
   whatsapp: z.string()
     .min(1, "WhatsApp é obrigatório")
     .regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, "Formato: (11) 99999-9999"),
@@ -225,10 +226,28 @@ const Cadastro = () => {
     }
     return value.substring(0, 15);
   };
+  
+  // --- NOVA FUNÇÃO PARA FORMATAR A DATA ---
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    let result = numbers.slice(0, 8); // Limita a 8 dígitos (DDMMAAAA)
+    if (result.length > 4) {
+      result = `${result.slice(0, 2)}/${result.slice(2, 4)}/${result.slice(4)}`;
+    } else if (result.length > 2) {
+      result = `${result.slice(0, 2)}/${result.slice(2)}`;
+    }
+    return result;
+  };
 
   const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatWhatsApp(e.target.value);
     setValue('whatsapp', formatted, { shouldValidate: true });
+  };
+  
+  // --- NOVO HANDLER PARA A MUDANÇA DA DATA ---
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatDate(e.target.value);
+    setValue('dataNascimento', formatted, { shouldValidate: true });
   };
 
   const canProceedToNext = () => {
@@ -263,36 +282,42 @@ const Cadastro = () => {
   // --- INÍCIO DA FUNÇÃO onSubmit MODIFICADA PARA O FIREBASE ---
   const onSubmit = async (data: CadastroFormData) => {
     setIsSubmitting(true);
+    
+    // 1. Cria um ID customizado a partir do número de telefone, removendo caracteres especiais
+    const customId = data.whatsapp.replace(/\D/g, '');
 
-    const combinedData = {
-      ...npsData,
-      ...data,
-      // Mantém os arrays como estão, o Firestore lida bem com eles
-      createdAt: serverTimestamp() // Adiciona um carimbo de data/hora do servidor
+    // 2. Monta o objeto com os dados na ordem desejada
+    const finalData = {
+      createdAt: serverTimestamp(),
+      nomeCompleto: data.nomeCompleto,
+      whatsapp: data.whatsapp,
+      aceitarMensagens: data.aceitarMensagens,
+      dataNascimento: data.dataNascimento,
+      npsScore: npsData.npsScore,
+      motivoPrincipal: npsData.motivoPrincipal,
+      pontosFortes: npsData.pontosFortes,
+      melhorias: npsData.melhorias,
+      custoBeneficio: npsData.custoBeneficio,
+      // Adiciona os campos 'outro' apenas se existirem
+      ...(npsData.motivoPrincipal === 'outro' && { motivoOutro: npsData.motivoOutro }),
+      ...(npsData.pontosFortes?.includes('outro') && { pontosOutro: npsData.pontosOutro }),
+      ...(npsData.melhorias?.includes('outro') && { melhoriasOutro: npsData.melhoriasOutro }),
     };
 
-    // Remove campos de 'outro' se não forem relevantes para economizar espaço
-    if (combinedData.motivoPrincipal !== 'outro') delete combinedData.motivoOutro;
-    if (!combinedData.pontosFortes?.includes('outro')) delete combinedData.pontosOutro;
-    if (!combinedData.melhorias?.includes('outro')) delete combinedData.melhoriasOutro;
-
     try {
-      // Cria uma referência para a sua coleção no Firestore.
-      // Se a coleção "pesquisas" não existir, ela será criada automaticamente.
-      const pesquisasCollectionRef = collection(db, "pesquisas");
+      // 3. Cria uma referência ao documento usando o ID customizado
+      const pesquisaDocRef = doc(db, "pesquisas", customId);
 
-      // Adiciona um novo documento à coleção com os dados combinados.
-      await addDoc(pesquisasCollectionRef, combinedData);
+      // 4. Usa setDoc para criar ou sobrescrever o documento com o ID especificado
+      await setDoc(pesquisaDocRef, finalData);
       
-      console.log("Dados enviados com sucesso para o Firestore!");
-      setSubmissionSuccess(true); // Ativa a tela de sucesso
-      setCurrentStep(7); // Avança para a etapa de agradecimento
+      console.log("Dados enviados com sucesso para o Firestore com o ID:", customId);
+      setSubmissionSuccess(true);
+      setCurrentStep(7);
 
-      // Limpa o formulário após o envio bem-sucedido
       setTimeout(() => {
-          // Opcional: Redirecionar após um tempo
           // window.location.href = 'https://www.zayam.com.br';
-      }, 5000); // Espera 5 segundos antes de redirecionar
+      }, 5000);
 
     } catch (error) {
       console.error("Erro ao enviar dados para o Firestore:", error);
@@ -390,7 +415,16 @@ const Cadastro = () => {
               <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-2">Data de Nascimento *</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input id="dataNascimento" type="date" {...register("dataNascimento")} className="pl-10 text-base sm:text-sm h-12 sm:h-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                {/* --- CAMPO DE DATA MODIFICADO --- */}
+                <input 
+                  id="dataNascimento" 
+                  type="tel" 
+                  placeholder="DD/MM/AAAA"
+                  maxLength={10}
+                  {...register("dataNascimento")} 
+                  onChange={handleDateChange}
+                  className="pl-10 text-base sm:text-sm h-12 sm:h-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                />
               </div>
               {errors.dataNascimento && <p className="text-red-500 text-sm mt-1">{errors.dataNascimento.message}</p>}
             </div>
